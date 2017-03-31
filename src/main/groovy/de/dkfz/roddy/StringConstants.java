@@ -4,7 +4,7 @@
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
 
-package de.dkfz.eilslabs.tools.constants;
+package de.dkfz.roddy;
 
 /**
  */
@@ -42,7 +42,7 @@ public class StringConstants {
     public static final String UNDERSCORE = "_";
     public static final String PLUS = "+";
     public static final String TILDE = "~";
-    public static final String DOUBLESTOP = ".";
+    public static final String DOUBLESTOP = "";
     public static final String SBRACKET_LEFT = "[";
     public static final String SBRACKET_RIGHT = "]";
     public static final String BRACE_LEFT = "{";

@@ -1,18 +1,18 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2017 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
 
-package de.dkfz.eilslabs.tools.logging
+package de.dkfz.roddy.tools
 
-import de.dkfz.eilslabs.tools.conversion.InfoObject
+import de.dkfz.roddy.core.InfoObject
 import org.apache.commons.io.filefilter.WildcardFileFilter
 
 import java.util.logging.*
 
 /**
- * This class wraps around javas logger class and implements a verbosity level structure.
+ * This class wraps around the Java logger class and implements a verbosity level structure.
  * Created by michael on 28.05.14.
  */
 @groovy.transform.CompileStatic
@@ -26,15 +26,21 @@ public class LoggerWrapper {
     public static final int VERBOSITY_RARE = 5;
     public static final int VERBOSITY_SOMETIMES = 3;
     public static final int VERBOSITY_ALWAYS = 1;
+    public static final String DEFAULT_APPLICATION_LOG_DIRECTORY = "/tmp/LoggerWrapperOutput"
+    public static final String DEFAULT_LOG_FILES_PREFIX = "default"
+    public static final boolean DEFAULT_LOG_EXTENSIVELY = true
+    public static final int DEFAULT_MAXIMUM_LOGFILES_PER_PREFIX = 32
+
+    private static File logFile
+    private static File applicationLogDirectory = new File(DEFAULT_APPLICATION_LOG_DIRECTORY)
+    private static String logFilesPrefix = DEFAULT_LOG_FILES_PREFIX
+    private static boolean logExtensively = DEFAULT_LOG_EXTENSIVELY
+    private static int maximumLogFilesPerPrefix = DEFAULT_MAXIMUM_LOGFILES_PER_PREFIX
     private static int verbosityLevel = VERBOSITY_LOW;
-    private Logger consoleLogger;
-    private static File logFile;
-    private static File applicationLogDirectory
-    private static boolean logExtensively
-    private static int maximumLogFilesPerPrefix
-    private static String logFilesPrefix
 
     private static InfoObject applicationStartupTimestamp = new InfoObject();
+
+    private Logger consoleLogger;
 
     public LoggerWrapper(String name) {
         consoleLogger = Logger.getLogger(name);
@@ -95,9 +101,6 @@ public class LoggerWrapper {
      */
     private static void manageLogFileCount() {
         try {
-            //int maximumLogFilesPerPrefix = ConversionHelperMethods.toInt(Roddy.getApplicationProperty("maximumLogFilesPerPrefix"), 32);
-            String logFilesPrefix = getLogfilesPrefix()
-
             File[] files = applicationLogDirectory.listFiles((FilenameFilter) new WildcardFileFilter(logFilesPrefix + "*")).sort() as File[];
             if (files.length > maximumLogFilesPerPrefix) {
                 // Remove old files
@@ -110,16 +113,10 @@ public class LoggerWrapper {
         }
     }
 
-    private static String getLogfilesPrefix() {
-        //String logFilesPrefix = Roddy.getApplicationProperty("logFilesPrefix", "default");
-        logFilesPrefix
-    }
-
     private static synchronized File getLogFile() {
         if (logFile == null) {
-            String logfilesPrefix = getLogfilesPrefix()
             String timestamp = InfoObject.formatTimestamp(applicationStartupTimestamp.getTimeStamp())
-            logFile = new File(applicationLogDirectory, [logfilesPrefix, timestamp].join("_") + ".tsv");
+            logFile = new File(applicationLogDirectory, [logFilesPrefix, timestamp].join("_") + ".tsv");
             manageLogFileCount();
         }
 
@@ -128,14 +125,13 @@ public class LoggerWrapper {
 
     private synchronized void logToLogFile(Level level, String text, Throwable ex) {
         try {
-            //if (!ConversionHelperMethods.toBoolean(Roddy.getApplicationProperty("logExtensively", "true"), true)) return;
             if (!logExtensively) return;
-            getLogFile() << [this.consoleLogger.getName(), level, text, ex?:"NoExceptionThrown"].join("\t") << System.getProperty("line.separator");
+            getLogFile() << [this.consoleLogger.getName(), level, text, ex ?: "NoExceptionThrown"].join("\t") << System.getProperty("line.separator");
         } catch (Exception ignored) {
         }
     }
 
-    public void log(File applicationLogDirectory, int lvl, String text) {
+    public void log(int lvl, String text) {
         def level = getVerbosityLevelObject(lvl)
         logToLogFile(level, text, null);
         if (verbosityLevel >= lvl) {
@@ -161,19 +157,7 @@ public class LoggerWrapper {
 
     public void severe(String text, Exception ex) {
         log(Level.SEVERE, text);
-        log(Level.INFO, getStackTraceAsString(ex));
-    }
-
-    private static String getStackTraceAsString(Exception exception) throws Exception{
-            StackTraceElement[] stackTrace = null;
-            for (int i = 0; i < 3 && stackTrace == null; i++)
-                stackTrace = exception.getStackTrace();
-            if (stackTrace != null)
-                return joinArray(stackTrace, System.getProperty("line.separator"));
-    }
-
-    private static String joinArray(Object[] array, String separator) {
-        return array.collect { it -> it.toString() }.join(separator);
+        log(Level.INFO, RoddyIOHelperMethods.getStackTraceAsString(ex));
     }
 
     public void warning(String text) {
@@ -206,7 +190,31 @@ public class LoggerWrapper {
      * Set up the applications logger mechanisms
      * This sets i.e. how messages are printed.
      */
-    public static void setup() {
+    static void setup(AppConfig appConfig) {
+        if (!appConfig) {
+            setup()
+        }
+
+        File ald = new File(appConfig.getProperty("applicationLogDirectory", DEFAULT_APPLICATION_LOG_DIRECTORY))
+        String prefix = appConfig.getProperty("logFilesPrefix", DEFAULT_LOG_FILES_PREFIX)
+        Boolean logext = RoddyConversionHelperMethods.toBoolean(appConfig.getProperty("logExtensively", "true"), DEFAULT_LOG_EXTENSIVELY)
+        int maxFiles = RoddyConversionHelperMethods.toInt(appConfig.getProperty("maximumLogFilesPerPrefix", "32"), DEFAULT_MAXIMUM_LOGFILES_PER_PREFIX)
+        setup(ald, prefix, logext, maxFiles)
+    }
+
+    /**
+     * Set up the applications logger mechanisms
+     * This sets i.e. how messages are printed.
+     */
+    static void setup(File applicationLogDirectory = new File(DEFAULT_APPLICATION_LOG_DIRECTORY)
+                      , String logFilesPrefix = DEFAULT_LOG_FILES_PREFIX
+                      , boolean logExtensively = DEFAULT_LOG_EXTENSIVELY
+                      , int maximumLogFilesPerPrefix = DEFAULT_MAXIMUM_LOGFILES_PER_PREFIX) {
+
+        LoggerWrapper.applicationLogDirectory = applicationLogDirectory
+        LoggerWrapper.logFilesPrefix = logFilesPrefix
+        LoggerWrapper.logExtensively = logExtensively
+        LoggerWrapper.maximumLogFilesPerPrefix = maximumLogFilesPerPrefix
 
         Logger global = Logger.getLogger("");
         Handler[] handlers = global.getHandlers();

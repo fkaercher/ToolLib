@@ -4,9 +4,9 @@
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
 
-package de.dkfz.eilslabs.tools.logging
+package de.dkfz.roddy.tools.logging
 
-import de.dkfz.eilslabs.tools.logging.IOHelperMethods
+import de.dkfz.roddy.tools.RoddyIOHelperMethods
 import groovy.transform.CompileStatic
 import org.junit.Test
 
@@ -16,11 +16,11 @@ import org.junit.Test
  * Created by heinold on 11.11.15.
  */
 @CompileStatic
-public class IOHelperMethodsTest {
+public class RoddyIOHelperMethodsTest {
 
     @Test
     public void testGetMD5OfText() {
-        assert IOHelperMethods.getMD5OfText("ABCD") == "cb08ca4a7bb5f9683c19133a84872ca7";
+        assert RoddyIOHelperMethods.getMD5OfText("ABCD") == "cb08ca4a7bb5f9683c19133a84872ca7";
     }
     /*
     @Test
@@ -28,10 +28,10 @@ public class IOHelperMethodsTest {
         String md5
         File testFile
         try {
-            File testBaseDir = MockupExecutionContextBuilder.getDirectory(IOHelperMethodsTest.name, "testGetMD5OfFile");
+            File testBaseDir = MockupExecutionContextBuilder.getDirectory(RoddyIOHelperMethodsTest.name, "testGetMD5OfFile");
             testFile = new File(testBaseDir, "A");
             testFile << "ABCD";
-            md5 = IOHelperMethods.getMD5OfFile(testFile);
+            md5 = RoddyIOHelperMethods.getMD5OfFile(testFile);
         } finally {
             testFile?.delete();
         }
@@ -39,7 +39,7 @@ public class IOHelperMethodsTest {
     }*/
     /*
     private File getTestBaseDir() {
-        File testBaseDir = MockupExecutionContextBuilder.getDirectory(IOHelperMethodsTest.name, "testGetSingleMD5OfFilesInDirectory");
+        File testBaseDir = MockupExecutionContextBuilder.getDirectory(RoddyIOHelperMethodsTest.name, "testGetSingleMD5OfFilesInDirectory");
         testBaseDir
     }*/
 
@@ -48,13 +48,13 @@ public class IOHelperMethodsTest {
         return filenames.collect {
             File f = new File(md5TestDir, it)
             f << it
-            return IOHelperMethods.getMD5OfText("${md5TestDirShort}/${it}") + IOHelperMethods.getMD5OfFile(f)
+            return RoddyIOHelperMethods.getMD5OfText("${md5TestDirShort}/${it}") + RoddyIOHelperMethods.getMD5OfFile(f)
         }
     }
     /*
     @Test
     public void testGetSingleMD5OfFilesInDifferentDirectories() {
-        File testBaseDir = MockupExecutionContextBuilder.getDirectory(IOHelperMethodsTest.name, "testGetSingleMD5OfFilesInDirectory");
+        File testBaseDir = MockupExecutionContextBuilder.getDirectory(RoddyIOHelperMethodsTest.name, "testGetSingleMD5OfFilesInDirectory");
         File md5TestDir1 = new File(testBaseDir, "md5sumtest1");
         File md5TestDir2 = new File(md5TestDir1, "md5sumtest2");
         md5TestDir1.mkdirs();
@@ -74,12 +74,12 @@ public class IOHelperMethodsTest {
         aList += getMD5OfFilesInDirectories(testBaseDir, md5TestSubDir, ["E", "F"]);
 
         String text = aList.join(Constants.ENV_LINESEPARATOR)
-        assert IOHelperMethods.getSingleMD5OfFilesInDirectory(md5TestDir) == IOHelperMethods.getMD5OfText(text);
+        assert RoddyIOHelperMethods.getSingleMD5OfFilesInDirectory(md5TestDir) == RoddyIOHelperMethods.getMD5OfText(text);
     }*/
 
     /*@Test
     public void testCopyDirectory() {
-        File base = MockupExecutionContextBuilder.getDirectory(IOHelperMethodsTest.class.name, "copyDirectory")
+        File base = MockupExecutionContextBuilder.getDirectory(RoddyIOHelperMethodsTest.class.name, "copyDirectory")
         File src = new File(base, "src");
         File dst = new File(base, "dst");
         File dst2 = new File(dst, "dst")
@@ -107,7 +107,7 @@ public class IOHelperMethodsTest {
         assert !exbnw.canWrite()
 
         // To non existing directory with new name
-        IOHelperMethods.copyDirectory(src, dst)
+        RoddyIOHelperMethods.copyDirectory(src, dst)
         assert dst.exists()
         File nebw2 = new File(dst, nonExecutableButWritable)
         assert !nebw2.canExecute()
@@ -118,7 +118,7 @@ public class IOHelperMethodsTest {
         assert !exbnw2.canWrite()
 
         // To existing directory without new name
-        IOHelperMethods.copyDirectory(src, dst2)
+        RoddyIOHelperMethods.copyDirectory(src, dst2)
         assert dst2.exists()
         File nebw3 = new File(dst2, nonExecutableButWritable)
         assert !nebw3.canExecute()
@@ -152,7 +152,7 @@ public class IOHelperMethodsTest {
 
         valuesAndExpectedMap.each {
             String rights, String res ->
-                assert res == IOHelperMethods.symbolicToNumericAccessRights(rights);
+                assert res == RoddyIOHelperMethods.symbolicToNumericAccessRights(rights);
         }
     }
 */
@@ -168,7 +168,7 @@ public class IOHelperMethodsTest {
 
         valuesAndResults.each {
             String rights, String res ->
-                assert res == IOHelperMethods.convertUMaskToAccessRights(rights);
+                assert res == RoddyIOHelperMethods.convertUMaskToAccessRights(rights);
         }
     }
 }

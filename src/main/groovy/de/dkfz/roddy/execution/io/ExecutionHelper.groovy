@@ -1,13 +1,12 @@
-
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2017 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
 
-package de.dkfz.eilslabs.tools.execution
+package de.dkfz.roddy.execution.io
 
-import de.dkfz.eilslabs.tools.logging.LoggerWrapper
+import de.dkfz.roddy.tools.LoggerWrapper
 
 import java.lang.reflect.Field
 
@@ -32,17 +31,21 @@ class ExecutionHelper {
             this.processID = processID
             this.lines = lines
         }
+
+        boolean isSuccessful() {
+            return exitValue == 0
+        }
     }
 
     public static String executeSingleCommand(String command) {
         //TODO What an windows systems?
         //Process process = Roddy.getLocalCommandSet().getShellExecuteCommand(command).execute();
-        Process process = command.execute();
+        Process process = (["bash", "-c", "${command}"]).execute();
 
         final String separator = System.getProperty("line.separator");
         process.waitFor();
-        if(process.exitValue()) {
-            throw new RuntimeException("Process could not be run" + separator + "\tCommand: sh -c "+ command + separator + "\treturn code is: " + process.exitValue())
+        if (process.exitValue()) {
+            throw new RuntimeException("Process could not be run" + separator + "\tCommand: bash -c " + command + separator + "\treturn code is: " + process.exitValue())
         }
 
         def text = process.text
@@ -65,7 +68,7 @@ class ExecutionHelper {
      */
     public static ExtendedProcessExecutionResult executeCommandWithExtendedResult(String command, OutputStream outputStream = null) {
         //Process process = Roddy.getLocalCommandSet().getShellExecuteCommand(command).execute();
-        Process process = command.execute();
+        Process process = ["bash", "-c", command].execute();
 
         //TODO Put to a custom class which can handle things for Windows as well.
         String processID = getProcessID(process)

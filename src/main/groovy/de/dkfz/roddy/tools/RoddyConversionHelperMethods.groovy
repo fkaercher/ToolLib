@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2017 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
 
-package de.dkfz.eilslabs.tools.conversion
+package de.dkfz.roddy.tools
 /**
  * Contains methods to convert numbers
  *
@@ -13,7 +13,7 @@ package de.dkfz.eilslabs.tools.conversion
  * Time: 09:09
  */
 @groovy.transform.CompileStatic
-class ConversionHelperMethods {
+class RoddyConversionHelperMethods {
 
     public static int toInt(String value, int number = 0) {
         try {

@@ -1,5 +1,7 @@
 apply plugin: 'groovy'
 
+group = "de.dkfz.eilslabs"
+
 repositories {
     mavenCentral()
 }
@@ -9,4 +11,12 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile group: 'commons-codec', name: 'commons-codec', version: '1.9'
     compile group: 'org.apache.commons', name: 'commons-io', version: '1.3.2'
+}
+
+// Fix Java Version
+ext.langLevel = 1.8
+
+// Fix Gradle version
+task wrapper(type: Wrapper) {
+    gradleVersion = '3.3'
 }

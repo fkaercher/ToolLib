@@ -4,9 +4,9 @@
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
 
-package de.dkfz.eilslabs.tools.conversion
+package de.dkfz.roddy.tools.conversion
 
-import de.dkfz.eilslabs.tools.conversion.TimeUnit
+import de.dkfz.roddy.tools.TimeUnit
 import org.junit.Test
 
 /**

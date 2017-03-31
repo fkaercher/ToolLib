@@ -4,10 +4,10 @@
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
 
-package de.dkfz.eilslabs.tools.conversion
+package de.dkfz.roddy.tools.conversion
 
-import de.dkfz.eilslabs.tools.conversion.BufferUnit
-import de.dkfz.eilslabs.tools.conversion.BufferValue
+import de.dkfz.roddy.tools.BufferUnit
+import de.dkfz.roddy.tools.BufferValue
 import org.junit.Test
 
 /**

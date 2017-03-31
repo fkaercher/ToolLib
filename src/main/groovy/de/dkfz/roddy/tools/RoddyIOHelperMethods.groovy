@@ -1,16 +1,19 @@
 /*
- * Copyright (c) 2016 eilslabs.
+ * Copyright (c) 2017 eilslabs.
  *
  * Distributed under the MIT License (license terms are at https://www.github.com/eilslabs/Roddy/LICENSE.txt).
  */
 
-package de.dkfz.eilslabs.tools.logging
+package de.dkfz.roddy.tools
 
-
-import de.dkfz.eilslabs.tools.constants.StringConstants
-import de.dkfz.eilslabs.tools.execution.ExecutionHelper
+import de.dkfz.roddy.StringConstants
+import de.dkfz.roddy.execution.io.ExecutionHelper
 import groovy.io.FileType
 import org.apache.commons.codec.digest.DigestUtils
+import org.apache.commons.io.FileUtils
+
+import java.nio.file.*
+import java.nio.file.attribute.BasicFileAttributes
 
 /**
  * Contains methods which print out text on the console, like listworkflows.
@@ -21,7 +24,7 @@ import org.apache.commons.codec.digest.DigestUtils
  * Time: 09:09
  */
 @groovy.transform.CompileStatic
-class IOHelperMethods {
+class RoddyIOHelperMethods {
 
 
     public static abstract class Compressor {
@@ -110,7 +113,7 @@ class IOHelperMethods {
         }
     }
 
-    private static LoggerWrapper logger = LoggerWrapper.getLogger(IOHelperMethods.class.getSimpleName());
+    private static LoggerWrapper logger = LoggerWrapper.getLogger(RoddyIOHelperMethods.class.getSimpleName());
 
     private static Compressor compressor = new NativeLinuxZipCompressor();
 
@@ -162,16 +165,41 @@ class IOHelperMethods {
     }
 
     /**
-     * This method is a replacement for Apache FileUtils.copyDirectory
-     * It uses the local Roddy command set (with e.g. "cp -r" for Bash shells)
-     * It is designed to retain access rights.
+     * This method copies a file and tries to preserve access rights using Java get/set rights methods.
+     *
+     * Modified after http://docs.oracle.com/javase/8/docs/api/.
+     *
      * @param src
      * @param tgt
      */
-    public static void copyDirectory(String cmd) {
+    static void copyDirectory(File source, File target, CopyOption... options = [StandardCopyOption.COPY_ATTRIBUTES]) {
+        copyDirectory(source.toPath(), target.toPath(), options)
+    }
+    static void copyDirectory(Path source, Path target, CopyOption... options = [StandardCopyOption.COPY_ATTRIBUTES]) {
         try {
-            //String cmd = Roddy.getLocalCommandSet().getCopyDirectoryCommand(src, tgt);
-            ExecutionHelper.executeSingleCommand(cmd);
+            Files.walkFileTree(source, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE,
+                    new SimpleFileVisitor<Path>() {
+                        @Override
+                        FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
+                                throws IOException {
+                            Path targetdir = target.resolve(source.relativize(dir))
+                            // I am not happy with the fuzzy specification in the Java API concerning symlinks.
+                            try {
+                                Files.copy(dir, targetdir, options)
+                            } catch (FileAlreadyExistsException e) {
+                                if (!Files.isDirectory(targetdir))
+                                    throw e
+                            }
+                            return FileVisitResult.CONTINUE
+                        }
+
+                        @Override
+                        FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+                                throws IOException {
+                            Files.copy(file, target.resolve(source.relativize(file)), options)
+                            return FileVisitResult.CONTINUE
+                        }
+                    })
         } catch (Exception ex) {
             logger.severe(ex.toString())
         }
@@ -314,6 +342,55 @@ class IOHelperMethods {
                 g: (rights & 0070) >> 3,
                 o: (rights & 0007)]
     }
+
+    /** Split a pathname string into components (using '/'). Empty path components, as they occur between double
+     *  component separators ('//') are omitted.
+     *
+     * @param pathname
+     * @return
+     */
+    public static ArrayList<String> splitPathname(String pathname) {
+        pathname.split(StringConstants.SPLIT_SLASH).findAll({it != ""}) as ArrayList<String>
+    }
+
+    public static Optional<Integer> findComponentIndexInPath(String path, String component) {
+        Integer index = splitPathname(path).findIndexOf { it -> it == component }
+        if (-1 == index) {
+            Optional.empty()
+        } else {
+            Optional.of(index)
+        }
+    }
+
+    /** Match a variable, defined by a pattern in a path. This checks that all leading path components
+     *  that are not variable definitions in the pattern (i.e. ${someVar}) are identical for both the
+     *  pattern and the path. If there is a mismatch, a RuntimeException is raised. Only the first match
+     *  is considered. Later path components may diverge.
+     *
+     * @param pattern    Path pattern, e.g. /path/to/${variable}/to/be/matched
+     * @param variable   Variable to be matched, e.g. pid. ${variable} will be searched for in pattern.
+     * @param path       Path containing the value. The path value that is matched in here will be returned
+     * @return
+     */
+    public static Optional<String> getPatternVariableFromPath(String pattern, String variable, String path) {
+        ArrayList<String> patternComponents = splitPathname(pattern)
+        ArrayList<String> pathComponents = splitPathname(path)
+        Integer index = 0
+        while (index < Math.min(patternComponents.size(), pathComponents.size())) {
+            String patternC = patternComponents[index]
+            String pathC = pathComponents[index]
+            if (patternC.startsWith(StringConstants.DOLLAR_LEFTBRACE) && patternC.endsWith(StringConstants.BRACE_RIGHT)) {
+                if (patternC == "\${${variable}}") {
+                    return Optional.of(pathC)
+                }
+            } else if (patternC != pathC) {
+                throw new RuntimeException("Pattern and path have incompatible prefix path component ${index} before \${${variable}}. Pattern = ${pattern}, Path = ${path}")
+            }
+            ++index
+        }
+        return Optional.empty()
+    }
+
 
     public static String printTimingInfo(String info, long t1, long t2) {
         return "Timing " + info + ": " + ((t2 - t1) / 1000000) + " ms";
