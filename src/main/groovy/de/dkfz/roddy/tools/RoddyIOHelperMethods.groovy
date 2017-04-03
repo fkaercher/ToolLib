@@ -6,12 +6,14 @@
 
 package de.dkfz.roddy.tools
 
-
 import de.dkfz.roddy.StringConstants
 import de.dkfz.roddy.execution.io.ExecutionHelper
 import groovy.io.FileType
 import org.apache.commons.codec.digest.DigestUtils
 import org.apache.commons.io.FileUtils
+
+import java.nio.file.*
+import java.nio.file.attribute.BasicFileAttributes
 
 /**
  * Contains methods which print out text on the console, like listworkflows.
@@ -164,16 +166,40 @@ class RoddyIOHelperMethods {
 
     /**
      * This method copies a file and tries to preserve access rights using Java get/set rights methods.
+     *
+     * Modified after http://docs.oracle.com/javase/8/docs/api/.
+     *
      * @param src
      * @param tgt
      */
-    public static void copyDirectory(File src, File tgt) {
+    static void copyDirectory(File source, File target, CopyOption... options = [StandardCopyOption.COPY_ATTRIBUTES]) {
+        copyDirectory(source.toPath(), target.toPath(), options)
+    }
+    static void copyDirectory(Path source, Path target, CopyOption... options = [StandardCopyOption.COPY_ATTRIBUTES]) {
         try {
-            FileUtils.copyDirectory(src, tgt)
-            tgt.setReadable(src.canRead())
-            tgt.setWritable(src.canWrite())
-            tgt.setExecutable(src.canExecute())
+            Files.walkFileTree(source, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE,
+                    new SimpleFileVisitor<Path>() {
+                        @Override
+                        FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
+                                throws IOException {
+                            Path targetdir = target.resolve(source.relativize(dir))
+                            // I am not happy with the fuzzy specification in the Java API concerning symlinks.
+                            try {
+                                Files.copy(dir, targetdir, options)
+                            } catch (FileAlreadyExistsException e) {
+                                if (!Files.isDirectory(targetdir))
+                                    throw e
+                            }
+                            return FileVisitResult.CONTINUE
+                        }
 
+                        @Override
+                        FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+                                throws IOException {
+                            Files.copy(file, target.resolve(source.relativize(file)), options)
+                            return FileVisitResult.CONTINUE
+                        }
+                    })
         } catch (Exception ex) {
             logger.severe(ex.toString())
         }

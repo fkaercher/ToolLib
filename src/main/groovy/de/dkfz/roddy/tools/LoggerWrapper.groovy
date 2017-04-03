@@ -101,8 +101,8 @@ public class LoggerWrapper {
      */
     private static void manageLogFileCount() {
         try {
-            File[] files = applicationLogDirectory.listFiles((FilenameFilter) new WildcardFileFilter(logFilesPrefix + "*")).sort() as File[];
-            if (files.length > maximumLogFilesPerPrefix) {
+            File[] files = applicationLogDirectory.listFiles((FilenameFilter) new WildcardFileFilter(logFilesPrefix + "*"))?.sort() as File[];
+            if (files && files.length > maximumLogFilesPerPrefix) {
                 // Remove old files
                 for (int i = 0; i < files.length - maximumLogFilesPerPrefix + 1; i++) {
                     LoggerWrapper.getLogger(LoggerWrapper.class).postSometimesInfo("Deleted old logfile ${files[i]}.")
@@ -168,16 +168,28 @@ public class LoggerWrapper {
         log(Level.INFO, text);
     }
 
+    public void rare(String text) {
+        postRareInfo(text)
+    }
+
     public void postRareInfo(String text) {
         logToLogFile(Level.INFO, text, null);
         if (verbosityLevel >= VERBOSITY_RARE)
             consoleLogger.log(Level.INFO, text);
     }
 
+    public void always(String text) {
+        postAlwaysInfo(text)
+    }
+
     public void postAlwaysInfo(String text) {
         logToLogFile(Level.INFO, text, null);
         if (verbosityLevel >= VERBOSITY_ALWAYS)
             consoleLogger.log(Level.INFO, text);
+    }
+
+    public void sometimes(String text) {
+        postSometimesInfo(text)
     }
 
     public void postSometimesInfo(String text) {

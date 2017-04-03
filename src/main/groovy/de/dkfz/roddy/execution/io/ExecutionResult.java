@@ -15,7 +15,7 @@ import java.util.List;
  * Commands can i.e. be executed via ssh or on the local command line.
  * @author michael
  */
-public class ExecutionResult extends InfoObject {
+public class ExecutionResult extends ExecutionHelper.ExtendedProcessExecutionResult {
 
     /**
      * Successful or not?
@@ -24,6 +24,7 @@ public class ExecutionResult extends InfoObject {
     /**
      * An error number. Normally the return code for shell stuff.
      */
+    @Deprecated
     public final int errorNumber;
     /**
      * All result lines.
@@ -35,17 +36,27 @@ public class ExecutionResult extends InfoObject {
      */
     public final String firstLine;
 
-    public final String processID;
+    public final int exitCode;
 
-    public ExecutionResult(boolean successful, int errorNumber, List<String> resultLines, String processID) {
+    public ExecutionResult(boolean successful, int exitCode, List<String> resultLines, String processID) {
+        super(exitCode, processID, resultLines);
         this.successful = successful;
-        this.errorNumber = errorNumber;
+        this.errorNumber = exitCode;
+        this.exitCode = exitCode;
         this.resultLines = resultLines;
-        this.processID = processID;
+//        this.processID = processID;
         if(resultLines.size() > 0)
             firstLine = resultLines.get(0);
         else
             firstLine = null;
     }
 
+    @Override
+    public boolean isSuccessful() {
+        return exitCode == 0;
+    }
+
+    public boolean getSuccessful() {
+        return isSuccessful();
+    }
 }

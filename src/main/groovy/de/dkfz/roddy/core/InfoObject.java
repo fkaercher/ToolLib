@@ -68,7 +68,6 @@ public class InfoObject {
 
     public int getAgeInSeconds() {
         long age = (int)(((new Date().getTime()) - timeStamp.getTime()) / 1000);
-//        System.out.println(age);
         return age > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)age;
     }
 
