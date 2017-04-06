@@ -90,4 +90,13 @@ public class TimeUnitTest {
     public void testInvalidTimeUnit() {
         new TimeUnit("4g");
     }
+
+    @Test
+    void testEquals() {
+        assert new TimeUnit("2d") == new TimeUnit("00:48:00:00")
+        assert new TimeUnit("2s") == new TimeUnit("00:00:00:02")
+        assert new TimeUnit("2s") == new TimeUnit("00:02")
+        assert new TimeUnit("2h") == new TimeUnit("02:00:00")
+        assert new TimeUnit("2h") == new TimeUnit("02")
+    }
 }
